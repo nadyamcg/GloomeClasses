@@ -393,7 +393,8 @@
 			"type": "block",
 			"code": "gloomeclasses:refurbishedcrock-east",
 			"attributes": {
-				"sealed": true
+				"sealed": true,
+				"rosinSealed": true
 			}
 		}
 	},
