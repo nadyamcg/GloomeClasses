@@ -42,6 +42,7 @@ namespace GloomeClasses.src {
         public const string StaticTranslocatorPatchesCategory = "gloomeClassesStaticTranslocatorBlockPatchCategory";
         public const string DragonskinPatchCategory = "gloomeClassesDragonskinPatchCategory";
         public const string DiagnosticPatchCategory = "gloomeClassesDiagnosticsPatchCategory";
+        public const string CrockCraftingPatchCategory = "gloomeClassesCrockCraftingPatchCategory";
 
         public static ICoreAPI Api;
         public static ICoreClientAPI CApi;
@@ -147,6 +148,7 @@ namespace GloomeClasses.src {
             harmony.PatchCategory(BlockSchematicPatchCategory);
             harmony.PatchCategory(StaticTranslocatorPatchesCategory);
             harmony.PatchCategory(DragonskinPatchCategory);
+            harmony.PatchCategory(CrockCraftingPatchCategory);
 
             // apply diagnostic patches
             TraitSystemDiagnostics.ApplyTraitSystemPatches(harmony);
