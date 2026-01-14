@@ -14,6 +14,15 @@ namespace GloomeClasses.src.Utils;
 /// </summary>
 public static class Log
 {
+  // config flags - server defaults to off to avoid spam, client defaults to on
+  public static bool EnableServerDebug { get; set; } = false;
+  public static bool EnableClientDebug { get; set; } = true;
+
+  private static bool ShouldDebug(ICoreAPI api) {
+    if (api == null) return false;
+    return api.Side == EnumAppSide.Server ? EnableServerDebug : EnableClientDebug;
+  }
+
   /// <summary>
   /// logs a debug message (goes to client-debug.log only).
   /// use for detailed development information not visible to users.
@@ -23,6 +32,7 @@ public static class Log
   /// <param name="message">Message text</param>
   public static void Debug(ICoreAPI api, string tag, string message)
   {
+    if (!ShouldDebug(api)) return;
     api.Logger.Debug($"[GloomeClasses:{tag}] {message}");
   }
 
@@ -36,6 +46,7 @@ public static class Log
   /// <param name="args">Format arguments</param>
   public static void Debug(ICoreAPI api, string tag, string format, params object[] args)
   {
+    if (!ShouldDebug(api)) return;
     api.Logger.Debug($"[GloomeClasses:{tag}] {format}", args);
   }
 
@@ -151,6 +162,7 @@ public static class Log
   /// <param name="message">Detailed message</param>
   public static void VerboseDebug(ICoreAPI api, string tag, string message)
   {
+    if (!ShouldDebug(api)) return;
     api.Logger.VerboseDebug($"[GloomeClasses:{tag}] {message}");
   }
 
@@ -164,6 +176,7 @@ public static class Log
   /// <param name="args">Format arguments</param>
   public static void VerboseDebug(ICoreAPI api, string tag, string format, params object[] args)
   {
+    if (!ShouldDebug(api)) return;
     api.Logger.VerboseDebug($"[GloomeClasses:{tag}] {format}", args);
   }
 }
