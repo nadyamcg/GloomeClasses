@@ -14,6 +14,43 @@ namespace GloomeClasses.src.Chef {
         // refurbished crocks provide better preservation than vanilla crocks
         // rosin sealing provides even better preservation than fat/beeswax sealing
 
+        public override void OnCreatedByCrafting(ItemSlot[] allInputslots, ItemSlot outputSlot, GridRecipe byRecipe) {
+            if (outputSlot.Itemstack == null) return;
+
+            // check if this is a sealing recipe (has a sealing ingredient)
+            bool hasSealingIngredient = false;
+            bool hasRosin = false;
+            ItemSlot crockSlot = null;
+
+            for (int i = 0; i < allInputslots.Length; i++) {
+                var slot = allInputslots[i];
+                if (slot.Itemstack == null) continue;
+
+                if (slot.Itemstack.Collectible is BlockCrock) {
+                    crockSlot = slot;
+                } else if (slot.Itemstack.ItemAttributes?["canSealCrock"]?.AsBool(false) == true) {
+                    hasSealingIngredient = true;
+                    // check if it's rosin specifically
+                    if (slot.Itemstack.Collectible.Code.Path == "rosin") {
+                        hasRosin = true;
+                    }
+                }
+            }
+
+            // copy attributes from input crock if present
+            if (crockSlot != null) {
+                outputSlot.Itemstack.Attributes = crockSlot.Itemstack.Attributes.Clone();
+            }
+
+            // only set sealed if this is a sealing recipe
+            if (hasSealingIngredient) {
+                outputSlot.Itemstack.Attributes.SetBool("sealed", true);
+                if (hasRosin) {
+                    outputSlot.Itemstack.Attributes.SetBool("rosinSealed", true);
+                }
+            }
+        }
+
         public override float GetContainingTransitionModifierContained(IWorldAccessor world, ItemSlot inSlot, EnumTransitionType transType) {
             float mul = 1f;
 
