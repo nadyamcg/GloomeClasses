@@ -1,7 +1,7 @@
 [
   {
     "op": "addmerge",
-    "path": "/drops/0/quantityByType/dropModbyStat",
+    "path": "/drops/0/dropModbyStat",
     "value": "saplingDropRate",
     "file": "game:blocktypes/plant/leaves/branchy.json"
   },
