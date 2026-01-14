@@ -21,6 +21,12 @@ namespace GloomeClasses.src.CollectibleBehaviors {
 
         public const string LocustLoverCode = "locustlover";
 
+        // metalbit healing config: variant suffix -> (healthRestored, corruptedHealer)
+        private static readonly Dictionary<string, (int health, bool corrupted)> MetalbitHealing = new() {
+            { "tinbronze", (2, false) },
+            { "blackbronze", (4, true) }
+        };
+
         public override void Initialize(JsonObject properties) {
             base.Initialize(properties);
             this.properties = properties.AsObject<HealsHackedProps>();
@@ -28,14 +34,26 @@ namespace GloomeClasses.src.CollectibleBehaviors {
 
         public override void OnHeldInteractStart(ItemSlot slot, EntityAgent byEntity, BlockSelection blockSel, EntitySelection entitySel, bool firstEvent, ref EnumHandHandling handHandling, ref EnumHandling handling) {
             if (byEntity is EntityPlayer entPlayer && entitySel != null && entitySel.Entity != null && entitySel.Entity is EntityLocust && entitySel.Entity.Properties.Variant.ContainsKey("state") && slot.StackSize > 0)
-            { //The only Locusts that have a 'State' variant are the hacked ones!
+            { // the only locusts that have a 'state' variant are the hacked ones
+                // resolve healing values - check if metalbit with runtime config
+                var itemCode = slot.Itemstack?.Collectible?.Code?.Path ?? "";
+                int healthRestored = properties.healthRestored;
+                bool corruptedHealer = properties.corruptedHealer;
+
+                if (itemCode.StartsWith("metalbit-")) {
+                    var variant = itemCode.Replace("metalbit-", "");
+                    if (MetalbitHealing.TryGetValue(variant, out var cfg)) {
+                        healthRestored = cfg.health;
+                        corruptedHealer = cfg.corrupted;
+                    }
+                }
                 string classcode = entPlayer.WatchedAttributes.GetString("characterClass");
                 CharacterClass charclass = entPlayer.Api.ModLoader.GetModSystem<CharacterSystem>().characterClasses.FirstOrDefault(c => c.Code == classcode);
                 var hasLocustLover = charclass != null && charclass.Traits.Contains(LocustLoverCode);
 
                 if (hasLocustLover && entitySel.Entity.Properties.Variant.TryGetValue("type", out string hackedType))
                 {
-                    if (properties.corruptedHealer == false && hackedType == "bronze")
+                    if (corruptedHealer == false && hackedType == "bronze")
                     {
                         var locustHealth = entitySel.Entity.GetBehavior<EntityBehaviorHealth>();
 
@@ -60,14 +78,14 @@ namespace GloomeClasses.src.CollectibleBehaviors {
                         {
                             Source = EnumDamageSource.Internal,
                             Type = EnumDamageType.Heal
-                        }, properties.healthRestored);
+                        }, healthRestored);
 
                         slot.TakeOut(1);
                         slot.MarkDirty();
 
                         return;
                     }
-                    else if (properties.corruptedHealer == true && hackedType != "bronze")
+                    else if (corruptedHealer == true && hackedType != "bronze")
                     {
                         var locustHealth = entitySel.Entity.GetBehavior<EntityBehaviorHealth>();
 
@@ -92,7 +110,7 @@ namespace GloomeClasses.src.CollectibleBehaviors {
                         {
                             Source = EnumDamageSource.Internal,
                             Type = EnumDamageType.Heal
-                        }, properties.healthRestored);
+                        }, healthRestored);
 
                         slot.TakeOut(1);
                         slot.MarkDirty();

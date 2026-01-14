@@ -1,7 +1,9 @@
 using HarmonyLib;
 using System;
+using System.Linq;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
+using Vintagestory.GameContent;
 using GloomeClasses.src;
 using GloomeClasses.src.Diagnostics;
 
@@ -14,7 +16,8 @@ namespace GloomeClasses.src.Diagnostics.Patches
 
 		[HarmonyPrefix]
 		[HarmonyPatch(typeof(Vintagestory.GameContent.CharacterSystem), "setCharacterClass")]
-		public static void Prefix_SetCharacterClass(
+		public static bool Prefix_SetCharacterClass(
+			CharacterSystem __instance,
 			EntityPlayer eplayer,
 			string classCode,
 			bool initializeGear)
@@ -22,6 +25,23 @@ namespace GloomeClasses.src.Diagnostics.Patches
 			try
 			{
 				string playerName = eplayer.GetName() ?? "Unknown";
+
+				// check if the class code is valid (exists in characterClasses)
+				var validClass = __instance.characterClasses?.FirstOrDefault(c => c.Code == classCode);
+
+				if (validClass == null)
+				{
+					// class doesn't exist! skip original method to prevent crash
+					Logger.Warning("[GloomeClasses] Player '{0}' has invalid/disabled class '{1}'. " +
+						"This can happen when adding GloomeClasses to an existing save. " +
+						"The player should select a new class from the character selection screen.",
+						playerName, classCode);
+
+					DiagnosticLogger.LogCharselFailure(classCode, playerName,
+						$"Class '{classCode}' not found in available character classes (may be disabled or removed)");
+
+					return false;
+				}
 
 				// log the attempt
 				DiagnosticLogger.LogCharselAttempt(classCode, playerName);
@@ -31,10 +51,12 @@ namespace GloomeClasses.src.Diagnostics.Patches
 				Logger.Debug("[GloomeClasses]   Target Class: {0}", classCode);
 				Logger.Debug("[GloomeClasses]   Initialize Gear: {0}", initializeGear);
 
+				return true; // Continue to original method
 			}
 			catch (Exception ex)
 			{
 				Logger.Error("[GloomeClasses] Error in setCharacterClass prefix patch: {0}", ex.Message);
+				return true; // On error, let original method run (and potentially fail with better error)
 			}
 		}
 

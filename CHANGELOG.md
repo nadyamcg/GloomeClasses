@@ -1,147 +1,56 @@
-# Changelog
+# GlooMeClasses v1.2.3 Changelog
 
-all notable changes to GloomeClasses since the previous release (v1.0.10).
+an update has been released for GlooMeClasses! I appreciate everyone's patience and willingness to help me with debugging and fixing their experiences :>
 
-## [1.2.0] - 2025-12-13
+## Fixed
 
-#### New Diagnostics System
-- **New Diagnostic Logging Framework** ([DiagnosticLogger.cs](src/Diagnostics/DiagnosticLogger.cs))
-  - diagnostic logging with categorized messages based on class of origin
-  - startup diagnostics showing mod version and enabled features
-  - automatic detection of problematic third-party mods (RacialEquality, GloomeRaces, etc.)
-  - compatibility testing with any other class-altering mods
-    - character class detection and categorization (vanilla vs GloomeClasses vs other mods)
-    - `.charsel` command logging for debugging character selection issues
-  - player environment logging for trait debugging
-  - session diagnostic summary reports
+### Refurbished Crock System
+- **Rosin Sealing**: refurbished crocks can now be sealed as intended
+  - added 3D seal model ([assets/gloomeclasses/shapes/block/clay/crock/seal.json](assets/gloomeclasses/shapes/block/clay/crock/seal.json))
+  - rosin provides better preservation than fat/beeswax sealing
+  - recipe updated to support `rosinSealed` attribute
+  - `OnCreatedByCrafting` method handles sealing attributes and copies crock contents properly
+  - **Attribute Handling**: fixed attribute handling when crafting sealed crocks
+    - properly copies attributes from input crock to output
+    - correctly sets `sealed` and `rosinSealed` attributes based on sealing ingredient
 
-- **Mesh Generation Diagnostics** ([MeshDiagnostics.cs](src/Utils/MeshDiagnostics.cs))
-  - mesh generation is tracked, caching statistics to diagnose GL buffer warnings
-  - cache performance analysis with automatic warnings for poor performers
-  - new `.meshdiag` command for generating diagnostic reports
-  - might help identify excessive mesh regeneration issues
+- **Crock Crafting Patch**: new Harmony patch to allow vanilla crocks in refurbished crock conversion recipes
+  - you can craft from vanilla to refurbished crocks using a knife as intended
+  - properly handles sealing ingredient detection
 
-- **Trait System Diagnostics** ([TraitSystemDiagnostics.cs](src/Diagnostics/TraitSystemDiagnostics.cs))
-  - runtime monitoring of trait application and effects to see what's working, what isn't
+### Class System
+- **Class Migration System**: automatic migration from vanilla classes to GloomeClasses
+  - migrates players who had vanilla classes before installing the mod
+  - players receive in-game notification when their class is migrated
+  - migration events are logged to diagnostics
+  - new `LogClassMigration` method tracks player class migrations
 
-- **Character System Diagnostic Patches** ([CharacterSystemDiagnosticPatches.cs](src/Diagnostics/Patches/CharacterSystemDiagnosticPatches.cs))
-  - automatic logging during character creation and trait assignment
-  - reflection-based access to internal CharacterSystem for diagnostics
+- **`.charsel` Crash Prevention**: using `.charsel` in certain conditions should no longer crash your game
+  - added validation in [CharacterSystemDiagnosticPatches.cs](src/Diagnostics/Patches/CharacterSystemDiagnosticPatches.cs#L29) to detect invalid/disabled class codes
+  - prevents crashes when players have classes that no longer exist
+  - provides clear warning messages and diagnostic logging
+  - common when adding GloomeClasses to existing saves with vanilla classes
+  - prefix patch now returns `false` to skip original method when class is invalid
 
-- **Agoraphobia Diagnostic Patches** ([AgoraphobiaDiagnosticsPatches.cs](src/Diagnostics/Patches/AgoraphobiaDiagnosticsPatches.cs))
-  - detailed logging for agoraphobia trait behavior
-  - environmental detection debugging (171 lines of diagnostic code)
+### Class-Specific Fixes
+- **Locust Lover: Metalbit Healing Refactor**: fixes issues with tin bronze metal bits becoming unworkable due to a conflict with SmithingPlus
+  - metalbit healing now uses runtime configuration instead of JSON patches
+  - simplified [apply-healhacked-behavior-patch.json](assets/gloomeclasses/patches/apply-healhacked-behavior-patch.json) to single behavior entry
+  - healing values determined by metalbit variant at runtime:
+    - tin bronze: 2 HP (non-corrupted healer)
+    - black bronze: 4 HP (corrupted healer)
+  - more maintainable and extensible architecture
 
-#### Centralized Logging Utility
-- **New Log Helper Class** ([Log.cs](src/Utils/Log.cs))
-  - consistent, tagged logging across all GloomeClasses components
-  - exception logging with automatic stack traces
-  - follows Vintage Story Logger API best practices
+### System Improvements
+- **Logging System Overhaul**:
+  - all debug logging in [BlockEntityMetalBarrel.cs](src/Alchemist/BlockEntityMetalBarrel.cs) converted to use `Log` utility
+  - debug output now respects enable/disable flags:
+    - server debug logging disabled by default (reduces spam)
+    - client debug logging enabled by default
 
-#### Dev Experience Improvements
-- **Build System Enhancements**
-  - automatic detection of install if `$(VINTAGE_STORY)` env variable is not set
-  - improved build configuration for development workflow
-
-- **Developer Documentation**
-  - comprehensive README.md with installation and build instructions
-
-- **Project Structure Improvements**
-  - total folder structure reorganization for better maintainability
-  - fixed nesting folder issues
-  - better caps consistency across files
-
-### Bug Fixes
-
-#### Critical Fixes
-- **Null Safety Improvements**
-  - added null safety checks in variables causing hard crashes/CTDs
-  - pattern matching null checks in diagnostic systems
-
-- **Alchemist Class Fixes**
-  - fixed alchemist barrel mechanics
-  - improved GUI distance checking for metal barrels
-  - better recipe handling and validation
-
-- **Chef Class Fixes**
-  - metal pots no longer burn players
-  - refurbished crocks can now be sealed properly, as originally intended
-
-- **Recipe & Localization Fixes**
-  - fixed trailing comma issues in JSON files
-  - Corrected handbook usage references
-  - fixed saltpeter hyperlink in its handbook for creation
-  - updated localizations for Russian and Ukrainian (still WIP)
-  - better JSON layout and formatting
-
-### Code Quality & Refactoring
-
-#### Modern C# Practices
-- **Syntax Modernization**
-  - updated to modern C# syntax patterns
-  - collection expressions using `[]` initializers
-  - pattern matching with `is not` operators
-  - file-scoped namespaces
-  - target-typed new expressions
-  - string interpolation improvements
-
-- **Total Refactoring**
-  - refactored alchemist block system with better separation of concerns
-  - refactored block entities with improved debugging support
-  - codebase-wide refactoring for maintainability
-
-#### Code Organization
-- **File Structure Improvements**
-  - Better organization of source files by feature/class
-  - Consistent naming conventions
-  - Improved namespace organization
-  - Added XML documentation comments to diagnostic systems
-
-### Content Updates
-
-#### Recipe Changes
-- **Oathkeeper Recipe Updates**
-  - new recipe for temporal gems to replace the impossible one
-
-- **Recipe Improvements**
-  - broken/impossible recipes in general have been fixed
-
-### Technical Improvements
-
-#### Harmony Patches
-- enhanced patch organization with new diagnostic category
-- better error handling in patch application
-- improved reflection-based patching for compatibility
-
-#### Mod System Initialization
-- diagnostic systems initialized during mod startup
-- mod conflict detection
-- character system validation after asset loading
-
-#### Performance
-- mesh caching diagnostics to identify potential performance issues
-
-### Known Issues
-
-- some vanilla class complaints in logs remain unresolved (diagnostic logging added to help track down)
-
-### For Developers
-
-#### New APIs Available
-- `DiagnosticLogger` - centralized diagnostic logging system
-- `Log` - standardized logging helper
-- `MeshDiagnostics` - mesh generation tracking
-
-#### New Commands
-- `.meshdiag` - generate mesh diagnostics report (requires controlserver privilege)
-
-### Migration Guide
-
-no migration needed. simply replace v1.0.10 with v1.2.0.
-
-### Acknowledgments
-
-- **Gloomeglo**: Original mod author and architecture
-- **JonR**: Co-author and previous development
+- **Diagnostics System Improvements**:
+  - string comparisons now use `StringComparison.CurrentCultureIgnoreCase` instead of `.ToLower()`
+  - more efficient and proper case-insensitive string matching in [DiagnosticLogger.cs](src/Diagnostics/DiagnosticLogger.cs)
+  - better detection of mod conflicts and class mods
 
 ---

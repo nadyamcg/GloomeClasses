@@ -42,6 +42,7 @@ namespace GloomeClasses.src {
         public const string StaticTranslocatorPatchesCategory = "gloomeClassesStaticTranslocatorBlockPatchCategory";
         public const string DragonskinPatchCategory = "gloomeClassesDragonskinPatchCategory";
         public const string DiagnosticPatchCategory = "gloomeClassesDiagnosticsPatchCategory";
+        public const string CrockCraftingPatchCategory = "gloomeClassesCrockCraftingPatchCategory";
 
         public static ICoreAPI Api;
         public static ICoreClientAPI CApi;
@@ -110,6 +111,49 @@ namespace GloomeClasses.src {
 
         public override void StartServerSide(ICoreServerAPI api) {
             SApi = api;
+
+            // register player join event for class migration
+            api.Event.PlayerJoin += OnPlayerJoin;
+        }
+
+        /// <summary>
+        /// mapping of vanilla class codes to their GloomeClasses equivalents.
+        /// used to auto-migrate players who had vanilla classes before installing this mod.
+        /// </summary>
+        private static readonly Dictionary<string, string> VanillaToGloomeClassMap = new() {
+            { "commoner", "commonergloo" },
+            { "hunter", "huntergloo" },
+            { "malefactor", "malefactorgloo" },
+            { "clockmaker", "clockmakergloo" },
+            { "blackguard", "blackguardgloo" },
+            { "tailor", "tailorgloo" }
+        };
+
+        private void OnPlayerJoin(IServerPlayer player) {
+            try {
+                if (player?.Entity == null) return;
+
+                string currentClass = player.Entity.WatchedAttributes.GetString("characterClass");
+                if (string.IsNullOrEmpty(currentClass)) return;
+
+                // check if the player has a vanilla class that needs migration
+                if (VanillaToGloomeClassMap.TryGetValue(currentClass, out string newClass)) {
+                    // migrate to GloomeClasses equivalent
+                    player.Entity.WatchedAttributes.SetString("characterClass", newClass);
+                    player.Entity.WatchedAttributes.MarkPathDirty("characterClass");
+
+                    DiagnosticLogger.LogClassMigration(player.PlayerName, currentClass, newClass);
+
+                    // notify the player
+                    player.SendMessage(
+                        GlobalConstants.GeneralChatGroup,
+                        $"[GloomeClasses] Your character class has been migrated from '{currentClass}' to '{newClass}'.",
+                        EnumChatType.Notification
+                    );
+                }
+            } catch (Exception ex) {
+                Logger?.Error("[GloomeClasses] REPORT THIS! Error during player class migration: {0}", ex.Message);
+            }
         }
 
         public override void StartClientSide(ICoreClientAPI api) {
@@ -147,6 +191,7 @@ namespace GloomeClasses.src {
             harmony.PatchCategory(BlockSchematicPatchCategory);
             harmony.PatchCategory(StaticTranslocatorPatchesCategory);
             harmony.PatchCategory(DragonskinPatchCategory);
+            harmony.PatchCategory(CrockCraftingPatchCategory);
 
             // apply diagnostic patches
             TraitSystemDiagnostics.ApplyTraitSystemPatches(harmony);

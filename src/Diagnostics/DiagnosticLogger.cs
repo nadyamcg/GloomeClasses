@@ -126,7 +126,7 @@ namespace GloomeClasses.src.Diagnostics
 				foreach (var item in characterClasses) {
                     var traitsField = item?.GetType().GetProperty("Traits")?.GetValue(item) as string[];
 
-                    if (item?.GetType().GetProperty("Code")?.GetValue(item) is string codeField && codeField.ToLower().Contains("gloo")) {
+                    if (item?.GetType().GetProperty("Code")?.GetValue(item) is string codeField && codeField.Contains("gloo", StringComparison.CurrentCultureIgnoreCase)) {
 						glooCount++;
 						var traits = traitsField != null ? string.Join(", ", traitsField) : "none";
 						logger.Debug("[GloomeClasses]   Class: {0}", codeField);
@@ -174,10 +174,10 @@ namespace GloomeClasses.src.Diagnostics
 
 				// check for other character/class mods
 				var classMods = mods.Where(m =>
-					m.Info.ModID.ToLower().Contains("class") ||
-					m.Info.ModID.ToLower().Contains("race") ||
-					m.Info.ModID.ToLower().Contains("character")
-				).ToList();
+					m.Info.ModID.Contains("class", StringComparison.CurrentCultureIgnoreCase) ||
+					m.Info.ModID.Contains("race", StringComparison.CurrentCultureIgnoreCase) ||
+					m.Info.ModID.Contains("character", StringComparison.CurrentCultureIgnoreCase)
+                ).ToList();
 
 				if (classMods.Count > 0) {
 					logger.Debug("[GloomeClasses] Other character/class mods detected:");
@@ -309,7 +309,7 @@ namespace GloomeClasses.src.Diagnostics
 						vanillaClasses.Add(code);
 					}
 					// detect GloomeClasses
-					else if (code.ToLower().Contains("gloo")) {
+					else if (code.Contains("gloo", StringComparison.CurrentCultureIgnoreCase)) {
 						glooCount++;
 						glooClasses.Add(code);
 					}
@@ -379,6 +379,19 @@ namespace GloomeClasses.src.Diagnostics
 
 			} catch (Exception ex) {
 				logger.Error("[GloomeClasses] Error logging charsel failure: {0}", ex.Message);
+			}
+		}
+
+		public static void LogClassMigration(string playerName, string fromClass, string toClass) {
+			if (!initialized) return;
+
+			try {
+				logger.Notification("[GloomeClasses] Migrated player '{0}' from vanilla class '{1}' to GloomeClasses equivalent '{2}'",
+					playerName, fromClass, toClass);
+				LogEntry(LogCategory.CharacterSystem, $"MIGRATION: {playerName} | {fromClass} -> {toClass}");
+
+			} catch (Exception ex) {
+				logger.Error("[GloomeClasses] Error logging class migration: {0}", ex.Message);
 			}
 		}
 
