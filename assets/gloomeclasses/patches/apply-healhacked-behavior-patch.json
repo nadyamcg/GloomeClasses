@@ -12,25 +12,9 @@
 		"file": "game:entities/lore/locust.json"
 	},
 	{
-		"op": "addmerge",
-		"path": "/behaviorsByType",
-		"value": { },
-		"file": "game:itemtypes/resource/metalbit.json"
-	},
-	{
-		"op": "addmerge",
-		"path": "/behaviorsByType/*-tinbronze",
-		"value": [
-			{ "name": "HealHackedBehavior", "properties": { "healthRestored": 2, "corruptedHealer": false }}
-		],
-		"file": "game:itemtypes/resource/metalbit.json"
-	},
-	{
-		"op": "addmerge",
-		"path": "/behaviorsByType/*-blackbronze",
-		"value": [
-			{ "name": "HealHackedBehavior", "properties": { "healthRestored": 4, "corruptedHealer": true }}
-		],
+		"op": "add",
+		"path": "/behaviors/-",
+		"value": { "name": "HealHackedBehavior" },
 		"file": "game:itemtypes/resource/metalbit.json"
 	},
 	{
