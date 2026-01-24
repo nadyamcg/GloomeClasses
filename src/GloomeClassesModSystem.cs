@@ -24,6 +24,7 @@ using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
 using Vintagestory.ServerMods;
 using GloomeClasses.src.Diagnostics.Patches;
+using GloomeClasses.src.Merchant;
 
 
 namespace GloomeClasses.src {
@@ -114,6 +115,41 @@ namespace GloomeClasses.src {
 
             // register player join event for class migration
             api.Event.PlayerJoin += OnPlayerJoin;
+
+            // debug command to force refresh special stock on nearby traders
+            api.ChatCommands.Create("refreshspecialstock")
+                .WithDescription("Force refresh special stock on nearby traders (debug)")
+                .RequiresPrivilege(Privilege.controlserver)
+                .HandleWith(args => {
+                    var player = args.Caller.Player;
+                    if (player?.Entity == null) {
+                        return TextCommandResult.Error("Must be called by a player");
+                    }
+
+                    int count = 0;
+                    var nearbyTraders = api.World.GetEntitiesAround(
+                        player.Entity.Pos.XYZ,
+                        50, 50,
+                        e => e is EntityTradingHumanoid
+                    );
+
+                    foreach (var entity in nearbyTraders) {
+                        if (entity is not EntityTradingHumanoid trader) continue;
+
+                        // clear special stock so it regenerates fresh next time
+                        SpecialStockHandling.ClearSpecialStockAttribute(trader);
+
+                        // clear temp main if stuck in special stock mode
+                        if (trader.WatchedAttributes.HasAttribute(SpecialStockHandling.TempMainAttribute)) {
+                            trader.WatchedAttributes.RemoveAttribute(SpecialStockHandling.TempMainAttribute);
+                            trader.WatchedAttributes.MarkAllDirty();
+                        }
+
+                        count++;
+                    }
+
+                    return TextCommandResult.Success($"Cleared special stock on {count} trader(s) within 50 blocks");
+                });
         }
 
         /// <summary>
